@@ -3,7 +3,7 @@
   "configVersion": 1,
   "workspaces": {
     "": {
-      "name": "gh-pages",
+      "name": "circuit-design-toolkit",
       "dependencies": {
         "react": "^19.2.6",
         "react-dom": "^19.2.6",
