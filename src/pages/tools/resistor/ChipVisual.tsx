@@ -6,26 +6,24 @@ export default function ChipVisual({ code }: Props) {
   const display = code.padEnd(3, "?").slice(0, 4)
 
   return (
-    <svg viewBox="0 0 200 80" className="mx-auto w-full max-w-xs">
-      {/* bottom electrode */}
-      <rect x={15} y={28} width={170} height={24} rx={3} fill="#B0B0B0" />
-      {/* ceramic body */}
-      <rect x={32} y={28} width={136} height={24} rx={2} fill="#D4A574" />
-      {/* left cap */}
-      <rect x={15} y={28} width={17} height={24} rx={2} fill="#C0C0C0" />
-      <rect x={15} y={28} width={17} height={24} fill="#C0C0C0" />
-      {/* right cap */}
-      <rect x={168} y={28} width={17} height={24} rx={2} fill="#C0C0C0" />
-      <rect x={173} y={28} width={12} height={24} fill="#C0C0C0" />
-      {/* marking surface */}
-      <rect x={40} y={30} width={120} height={20} rx={1} fill="#B8860B" />
+    <svg viewBox="0 0 200 120" className="mx-auto w-full max-w-xs">
+      {/* bottom electrode (full width) */}
+      <rect x={25} y={30} width={150} height={60} rx={4} fill="#B0B0B0" />
+      {/* ceramic body (black) */}
+      <rect x={45} y={30} width={110} height={60} rx={2} fill="#1a1a1a" />
+      {/* left terminal */}
+      <rect x={25} y={30} width={20} height={60} rx={2} fill="#C0C0C0" />
+      <rect x={25} y={30} width={20} height={60} fill="#C0C0C0" />
+      {/* right terminal */}
+      <rect x={155} y={30} width={20} height={60} rx={2} fill="#C0C0C0" />
+      <rect x={155} y={30} width={20} height={60} fill="#C0C0C0" />
       {/* code */}
       <text
         x={100}
-        y={45}
+        y={68}
         textAnchor="middle"
         fontFamily="monospace"
-        fontSize={14}
+        fontSize={18}
         fontWeight="bold"
         fill="white"
       >
