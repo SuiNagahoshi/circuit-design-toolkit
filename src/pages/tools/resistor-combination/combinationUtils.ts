@@ -113,6 +113,7 @@ export interface SearchResult {
 /* ---- Topology labels ---- */
 
 export const TOPOLOGY_LABELS: Record<string, string> = {
+  single: "R1",
   series2: "R1 + R2",
   parallel2: "R1 ∥ R2",
   series3: "R1 + R2 + R3",
@@ -131,6 +132,8 @@ export const TOPOLOGY_LABELS: Record<string, string> = {
 
 export function calcTotal(topology: string, resistors: number[]): number {
   switch (topology) {
+    case "single":
+      return resistors[0]
     case "series2":
     case "series3":
     case "series4":
@@ -183,7 +186,7 @@ const TOP_K = 100 // max candidates collected per topology before sorting
 
 const DECADE_MIN = -1, DECADE_MAX = 7
 const E24 = buildSeries(E24_BASE, DECADE_MIN, DECADE_MAX)
-const E24E48 = buildSeries([...new Set([...E24_BASE, ...E48_BASE])], DECADE_MIN, DECADE_MAX)
+const E24E48 = buildSeries([...new Set([...E24_BASE, ...E48_BASE])], DECADE_MIN, DECADE_MAX).sort((a, b) => a - b)
 
 function dedupKey(topology: string, resistors: number[]): string {
   const sorted = [...resistors].sort((a, b) => a - b)
@@ -455,6 +458,11 @@ export type MaxResistors = 2 | 3 | 4
 export function searchCombinations(target: number, maxResistors: MaxResistors): SearchResult[] {
   const all: SearchResult[] = []
 
+  const single = findClosest(target, E24E48)
+  if (single !== null) {
+    all.push(makeResult("single", [single], single, target))
+  }
+
   all.push(...searchSeries2(target))
   all.push(...searchParallel2(target))
 
@@ -476,8 +484,8 @@ export function searchCombinations(target: number, maxResistors: MaxResistors): 
 
   const e24Count = (resistors: number[]) => resistors.filter((r) => E24_SET.has(r)).length
   all.sort((a, b) => {
-    const sa = a.errorPercent * 100 - e24Count(a.resistors) * 0.01
-    const sb = b.errorPercent * 100 - e24Count(b.resistors) * 0.01
+    const sa = a.errorPercent * 100 + a.resistors.length * 0.1 - e24Count(a.resistors) * 0.01
+    const sb = b.errorPercent * 100 + b.resistors.length * 0.1 - e24Count(b.resistors) * 0.01
     return sa - sb
   })
   return all.slice(0, 10)
@@ -496,6 +504,8 @@ export { E24, E24E48 }
 export function formatExpression(topology: string, resistors: number[]): string {
   const f = (v: number) => formatValue(v)
   switch (topology) {
+    case "single":
+      return `${f(resistors[0])}`
     case "series2":
       return `${f(resistors[0])} + ${f(resistors[1])}`
     case "parallel2":
