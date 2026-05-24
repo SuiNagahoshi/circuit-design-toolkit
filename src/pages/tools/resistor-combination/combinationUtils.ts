@@ -464,3 +464,37 @@ export function getESeries(): number[] {
 }
 
 export { E24, E24E48 }
+
+/* ---- Format expression with actual values ---- */
+
+export function formatExpression(topology: string, resistors: number[]): string {
+  const f = (v: number) => formatValue(v)
+  switch (topology) {
+    case "series2":
+      return `${f(resistors[0])} + ${f(resistors[1])}`
+    case "parallel2":
+      return `${f(resistors[0])} ∥ ${f(resistors[1])}`
+    case "series3":
+      return `${f(resistors[0])} + ${f(resistors[1])} + ${f(resistors[2])}`
+    case "parallel3":
+      return `${f(resistors[0])} ∥ ${f(resistors[1])} ∥ ${f(resistors[2])}`
+    case "sp3":
+      return `(${f(resistors[0])} + ${f(resistors[1])}) ∥ ${f(resistors[2])}`
+    case "ps3":
+      return `(${f(resistors[0])} ∥ ${f(resistors[1])}) + ${f(resistors[2])}`
+    case "series4":
+      return `${f(resistors[0])} + ${f(resistors[1])} + ${f(resistors[2])} + ${f(resistors[3])}`
+    case "parallel4":
+      return `${f(resistors[0])} ∥ ${f(resistors[1])} ∥ ${f(resistors[2])} ∥ ${f(resistors[3])}`
+    case "sspp4":
+      return `(${f(resistors[0])} + ${f(resistors[1])}) ∥ (${f(resistors[2])} + ${f(resistors[3])})`
+    case "ppss4":
+      return `(${f(resistors[0])} ∥ ${f(resistors[1])}) + (${f(resistors[2])} ∥ ${f(resistors[3])})`
+    case "tsp4":
+      return `(${f(resistors[0])} + ${f(resistors[1])} + ${f(resistors[2])}) ∥ ${f(resistors[3])}`
+    case "tps4":
+      return `(${f(resistors[0])} ∥ ${f(resistors[1])} ∥ ${f(resistors[2])}) + ${f(resistors[3])}`
+    default:
+      return resistors.map(f).join(" · ")
+  }
+}

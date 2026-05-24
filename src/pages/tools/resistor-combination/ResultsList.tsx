@@ -1,5 +1,5 @@
 import type { SearchResult } from "./combinationUtils"
-import { formatValue } from "./combinationUtils"
+import { formatValue, formatExpression } from "./combinationUtils"
 
 interface Props {
   results: SearchResult[]
@@ -35,7 +35,10 @@ export default function ResultsList({ results, selectedIndex, onSelect }: Props)
                 <span className="flex h-6 w-6 items-center justify-center rounded-full bg-gray-100 text-xs font-bold text-gray-500">
                   {idx + 1}
                 </span>
-                <span className="font-medium text-gray-900">{res.label}</span>
+                <span className="font-mono text-sm font-medium text-gray-900">
+                  {formatExpression(res.topology, res.resistors)}
+                </span>
+                <span className="text-xs text-gray-400">Ω</span>
               </div>
               <span
                 className={`rounded-full px-2 py-0.5 text-xs font-medium ${
@@ -49,15 +52,8 @@ export default function ResultsList({ results, selectedIndex, onSelect }: Props)
                 {res.errorPercent < 0.01 ? "<0.01" : res.errorPercent.toFixed(2)}%
               </span>
             </div>
-            <div className="mt-1 flex items-center gap-2 text-sm">
-              <span className="text-gray-600">
-                {res.resistors.map((r) => formatValue(r)).join(" · ")}
-              </span>
-              <span className="text-gray-300">→</span>
-              <span className="font-semibold text-gray-900">
-                {formatValue(res.total)}
-                <span className="ml-0.5 font-normal text-gray-500">Ω</span>
-              </span>
+            <div className="mt-1 text-right text-sm text-gray-500">
+              = {formatValue(res.total)}Ω
             </div>
           </button>
         )

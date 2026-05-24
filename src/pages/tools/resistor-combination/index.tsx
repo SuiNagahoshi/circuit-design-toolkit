@@ -3,7 +3,6 @@ import {
   searchCombinations,
   getESeries,
   type SearchResult,
-  type MaxResistors,
 } from "./combinationUtils"
 import ResultsList from "./ResultsList"
 import CombinationEditor from "./CombinationEditor"
@@ -11,7 +10,6 @@ import CombinationEditor from "./CombinationEditor"
 export default function ResistorCombinationPage() {
   const [targetInput, setTargetInput] = useState("10")
   const [unit, setUnit] = useState(1000)
-  const [maxResistors, setMaxResistors] = useState<MaxResistors>(4)
   const [results, setResults] = useState<SearchResult[]>([])
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null)
   const [editing, setEditing] = useState<SearchResult | null>(null)
@@ -30,12 +28,12 @@ export default function ResistorCombinationPage() {
 
   const handleSearch = useCallback(() => {
     if (target === null) return
-    const combo = searchCombinations(target, maxResistors)
+    const combo = searchCombinations(target, 4)
     setResults(combo)
     setSelectedIndex(null)
     setEditing(null)
     setSearched(true)
-  }, [target, maxResistors])
+  }, [target])
 
   const handleSelect = useCallback(
     (idx: number) => {
@@ -89,27 +87,6 @@ export default function ResistorCombinationPage() {
                 </option>
               ))}
             </select>
-          </div>
-        </div>
-
-        <div className="mb-4">
-          <label className="mb-1 block text-sm font-medium text-gray-700">
-            最大本数
-          </label>
-          <div className="flex gap-2">
-            {([2, 3, 4] as MaxResistors[]).map((n) => (
-              <button
-                key={n}
-                onClick={() => setMaxResistors(n)}
-                className={`rounded-md px-4 py-2 text-sm font-medium transition ${
-                  maxResistors === n
-                    ? "bg-blue-600 text-white"
-                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                }`}
-              >
-                {n}本
-              </button>
-            ))}
           </div>
         </div>
 
