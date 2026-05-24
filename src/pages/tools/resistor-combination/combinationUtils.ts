@@ -113,6 +113,7 @@ export interface SearchResult {
 /* ---- Topology labels ---- */
 
 export const TOPOLOGY_LABELS: Record<string, string> = {
+  single: "R1",
   series2: "R1 + R2",
   parallel2: "R1 ∥ R2",
   series3: "R1 + R2 + R3",
@@ -131,6 +132,8 @@ export const TOPOLOGY_LABELS: Record<string, string> = {
 
 export function calcTotal(topology: string, resistors: number[]): number {
   switch (topology) {
+    case "single":
+      return resistors[0]
     case "series2":
     case "series3":
     case "series4":
@@ -455,6 +458,11 @@ export type MaxResistors = 2 | 3 | 4
 export function searchCombinations(target: number, maxResistors: MaxResistors): SearchResult[] {
   const all: SearchResult[] = []
 
+  const single = findClosest(target, E24E48)
+  if (single !== null) {
+    all.push(makeResult("single", [single], single, target))
+  }
+
   all.push(...searchSeries2(target))
   all.push(...searchParallel2(target))
 
@@ -496,6 +504,8 @@ export { E24, E24E48 }
 export function formatExpression(topology: string, resistors: number[]): string {
   const f = (v: number) => formatValue(v)
   switch (topology) {
+    case "single":
+      return `${f(resistors[0])}`
     case "series2":
       return `${f(resistors[0])} + ${f(resistors[1])}`
     case "parallel2":

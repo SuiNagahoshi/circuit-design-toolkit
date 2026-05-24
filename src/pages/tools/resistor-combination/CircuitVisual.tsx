@@ -193,6 +193,8 @@ function tpsLayout(
 
 function getLayout(topology: string): Layout {
   switch (topology) {
+    case "single":
+      return seriesLayout([160], 90)
     case "series2":
       return seriesLayout([85, 205])
     case "series3":
