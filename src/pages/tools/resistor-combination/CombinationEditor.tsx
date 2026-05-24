@@ -1,5 +1,6 @@
 import type { SearchResult } from "./combinationUtils"
 import { formatValue, calcTotal, TOPOLOGY_LABELS } from "./combinationUtils"
+import CircuitVisual from "./CircuitVisual"
 
 interface Props {
   combination: SearchResult
@@ -19,14 +20,16 @@ export default function CombinationEditor({ combination, target, eSeries, onChan
 
   return (
     <div className="rounded-lg border border-gray-200 bg-white p-4">
-      <div className="mb-3 flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-gray-900">編集</h3>
+      <div className="mb-4 flex items-center justify-between">
+        <h3 className="text-sm font-semibold text-gray-900">結果</h3>
         <span className="rounded bg-gray-100 px-2 py-0.5 text-xs text-gray-600">
           {TOPOLOGY_LABELS[combination.topology] ?? combination.topology}
         </span>
       </div>
 
-      <div className="space-y-2">
+      <CircuitVisual topology={combination.topology} resistors={combination.resistors} />
+
+      <div className="mt-4 space-y-2">
         {combination.resistors.map((r, idx) => (
           <div key={idx} className="flex items-center gap-3">
             <span className="w-8 text-xs font-medium text-gray-500">
@@ -43,7 +46,6 @@ export default function CombinationEditor({ combination, target, eSeries, onChan
                 </option>
               ))}
             </select>
-
           </div>
         ))}
       </div>

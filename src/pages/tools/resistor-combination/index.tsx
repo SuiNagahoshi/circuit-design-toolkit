@@ -116,7 +116,7 @@ export default function ResistorCombinationPage() {
       {/* Editor */}
       {editing && (
         <div>
-          <h2 className="mb-3 text-sm font-semibold text-gray-700">編集</h2>
+          <h2 className="mb-3 text-sm font-semibold text-gray-700">結果</h2>
           <CombinationEditor
             combination={editing}
             target={target!}
