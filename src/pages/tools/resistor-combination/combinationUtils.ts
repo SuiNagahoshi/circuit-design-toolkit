@@ -186,7 +186,7 @@ const TOP_K = 100 // max candidates collected per topology before sorting
 
 const DECADE_MIN = -1, DECADE_MAX = 7
 const E24 = buildSeries(E24_BASE, DECADE_MIN, DECADE_MAX)
-const E24E48 = buildSeries([...new Set([...E24_BASE, ...E48_BASE])], DECADE_MIN, DECADE_MAX)
+const E24E48 = buildSeries([...new Set([...E24_BASE, ...E48_BASE])], DECADE_MIN, DECADE_MAX).sort((a, b) => a - b)
 
 function dedupKey(topology: string, resistors: number[]): string {
   const sorted = [...resistors].sort((a, b) => a - b)
@@ -484,8 +484,8 @@ export function searchCombinations(target: number, maxResistors: MaxResistors): 
 
   const e24Count = (resistors: number[]) => resistors.filter((r) => E24_SET.has(r)).length
   all.sort((a, b) => {
-    const sa = a.errorPercent * 100 - e24Count(a.resistors) * 0.01
-    const sb = b.errorPercent * 100 - e24Count(b.resistors) * 0.01
+    const sa = a.errorPercent * 100 + a.resistors.length * 0.1 - e24Count(a.resistors) * 0.01
+    const sb = b.errorPercent * 100 + b.resistors.length * 0.1 - e24Count(b.resistors) * 0.01
     return sa - sb
   })
   return all.slice(0, 10)
