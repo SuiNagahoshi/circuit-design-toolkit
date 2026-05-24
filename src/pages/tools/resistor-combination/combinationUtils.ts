@@ -13,6 +13,8 @@ const E48_BASE = [
   6.81, 7.15, 7.50, 7.87, 8.25, 8.66, 9.09, 9.53,
 ]
 
+const E24_SET = new Set(buildSeries(E24_BASE, -1, 7))
+
 function buildSeries(base: number[], minDecade: number, maxDecade: number): number[] {
   const r: number[] = []
   for (let e = minDecade; e <= maxDecade; e++) {
@@ -472,7 +474,12 @@ export function searchCombinations(target: number, maxResistors: MaxResistors): 
     all.push(...searchTPS4(target))
   }
 
-  all.sort((a, b) => a.errorPercent - b.errorPercent)
+  const e24Count = (resistors: number[]) => resistors.filter((r) => E24_SET.has(r)).length
+  all.sort((a, b) => {
+    const sa = a.errorPercent * 100 - e24Count(a.resistors) * 0.01
+    const sb = b.errorPercent * 100 - e24Count(b.resistors) * 0.01
+    return sa - sb
+  })
   return all.slice(0, 10)
 }
 
