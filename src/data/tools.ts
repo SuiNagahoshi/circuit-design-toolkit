@@ -16,6 +16,14 @@ export const tools: Tool[] = [
     path: "/tools/resistor",
     category: "受動部品",
   },
+  {
+    id: "resistor-combination",
+    title: "合成抵抗計算",
+    description: "E24/E48系列から目標値に合う抵抗の組み合わせを探索",
+    icon: "⚡",
+    path: "/tools/resistor-combination",
+    category: "受動部品",
+  },
 ]
 
 export const categories = ["受動部品"]
