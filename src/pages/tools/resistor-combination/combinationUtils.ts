@@ -175,6 +175,8 @@ function makeResult(topology: string, resistors: number[], total: number, target
   }
 }
 
+const TOP_K = 100 // max candidates collected per topology before sorting
+
 /* ---- Search functions ---- */
 
 const DECADE_MIN = -1, DECADE_MAX = 7
@@ -217,18 +219,22 @@ function searchParallel2(target: number): SearchResult[] {
   return r
 }
 
-/* 3-resistor */
+/* 3-resistor – use E24+E48 for series/parallel, E24 for mixed */
 function searchSeries3(target: number): SearchResult[] {
   const r: SearchResult[] = [], seen = new Set<string>()
-  for (const r1 of E24E48) {
+  const s = E24E48
+  for (let i = 0; i < s.length; i++) {
+    const r1 = s[i]
     if (r1 >= target) break
-    for (const r2 of E24E48) {
+    for (let j = 0; j < s.length; j++) {
+      const r2 = s[j]
       if (r1 + r2 >= target) break
-      const r3 = findClosest(target - r1 - r2, E24E48)
+      const r3 = findClosest(target - r1 - r2, s)
       if (r3 === null) continue
       const total = r1 + r2 + r3
       const key = dedupKey("series3", [r1, r2, r3])
       if (seen.has(key)) continue; seen.add(key)
+      if (r.length >= TOP_K) continue
       r.push(makeResult("series3", [r1, r2, r3], total, target))
     }
   }
@@ -238,20 +244,24 @@ function searchSeries3(target: number): SearchResult[] {
 function searchParallel3(target: number): SearchResult[] {
   const r: SearchResult[] = [], seen = new Set<string>()
   const invT = 1 / target
-  for (const r1 of E24E48) {
+  const s = E24E48
+  for (let i = 0; i < s.length; i++) {
+    const r1 = s[i]
     if (r1 <= target) continue
     const inv1 = 1 / r1
-    for (const r2 of E24E48) {
+    for (let j = 0; j < s.length; j++) {
+      const r2 = s[j]
       if (r2 <= target) continue
       const inv12 = inv1 + 1 / r2
       if (inv12 >= invT) continue
       const r3t = 1 / (invT - inv12)
       if (r3t < 0) continue
-      const r3 = findClosest(r3t, E24E48)
+      const r3 = findClosest(r3t, s)
       if (r3 === null) continue
       const total = 1 / (inv1 + 1 / r2 + 1 / r3)
       const key = dedupKey("parallel3", [r1, r2, r3])
       if (seen.has(key)) continue; seen.add(key)
+      if (r.length >= TOP_K) continue
       r.push(makeResult("parallel3", [r1, r2, r3], total, target))
     }
   }
@@ -260,8 +270,11 @@ function searchParallel3(target: number): SearchResult[] {
 
 function searchSP3(target: number): SearchResult[] {
   const r: SearchResult[] = [], seen = new Set<string>()
-  for (const r1 of E24E48) {
-    for (const r2 of E24E48) {
+  const s = E24
+  for (let i = 0; i < s.length; i++) {
+    const r1 = s[i]
+    for (let j = 0; j < s.length; j++) {
+      const r2 = s[j]
       const a = r1 + r2
       if (a <= target) continue
       const r3t = (a * target) / (a - target)
@@ -271,6 +284,7 @@ function searchSP3(target: number): SearchResult[] {
       const total = (a * r3) / (a + r3)
       const key = dedupKey("sp3", [r1, r2, r3])
       if (seen.has(key)) continue; seen.add(key)
+      if (r.length >= TOP_K) continue
       r.push(makeResult("sp3", [r1, r2, r3], total, target))
     }
   }
@@ -279,8 +293,11 @@ function searchSP3(target: number): SearchResult[] {
 
 function searchPS3(target: number): SearchResult[] {
   const r: SearchResult[] = [], seen = new Set<string>()
-  for (const r1 of E24E48) {
-    for (const r2 of E24E48) {
+  const s = E24
+  for (let i = 0; i < s.length; i++) {
+    const r1 = s[i]
+    for (let j = 0; j < s.length; j++) {
+      const r2 = s[j]
       const a = (r1 * r2) / (r1 + r2)
       if (a >= target) continue
       const r3t = target - a
@@ -289,26 +306,28 @@ function searchPS3(target: number): SearchResult[] {
       const total = a + r3
       const key = dedupKey("ps3", [r1, r2, r3])
       if (seen.has(key)) continue; seen.add(key)
+      if (r.length >= TOP_K) continue
       r.push(makeResult("ps3", [r1, r2, r3], total, target))
     }
   }
   return r
 }
 
-/* 4-resistor – use pre-computed pairs */
-const pairSums = buildPairs(E24E48)
-const pairPars = buildPars(E24E48)
+/* 4-resistor – use pre-computed pairs (E24 only for perf) */
+const pairSumsE24 = buildPairs(E24)
+const pairParsE24 = buildPars(E24)
 
 function searchSSPP4(target: number): SearchResult[] {
   const r: SearchResult[] = [], seen = new Set<string>()
-  for (const b of pairSums) {
+  for (const b of pairSumsE24) {
     if (b.sum <= target) continue
     const aTarget = (b.sum * target) / (b.sum - target)
-    const a = findClosestPair(aTarget, pairSums)
+    const a = findClosestPair(aTarget, pairSumsE24)
     if (a === null) continue
     const total = (a.sum * b.sum) / (a.sum + b.sum)
     const key = dedupKey("sspp4", [a.a, a.b, b.a, b.b])
     if (seen.has(key)) continue; seen.add(key)
+    if (r.length >= TOP_K) continue
     r.push(makeResult("sspp4", [a.a, a.b, b.a, b.b], total, target))
   }
   return r
@@ -316,14 +335,15 @@ function searchSSPP4(target: number): SearchResult[] {
 
 function searchPPSS4(target: number): SearchResult[] {
   const r: SearchResult[] = [], seen = new Set<string>()
-  for (const b of pairPars) {
+  for (const b of pairParsE24) {
     if (b.val >= target) continue
     const aTarget = target - b.val
-    const a = findClosestPar(aTarget, pairPars)
+    const a = findClosestPar(aTarget, pairParsE24)
     if (a === null) continue
     const total = a.val + b.val
     const key = dedupKey("ppss4", [a.a, a.b, b.a, b.b])
     if (seen.has(key)) continue; seen.add(key)
+    if (r.length >= TOP_K) continue
     r.push(makeResult("ppss4", [a.a, a.b, b.a, b.b], total, target))
   }
   return r
@@ -331,19 +351,20 @@ function searchPPSS4(target: number): SearchResult[] {
 
 function searchTSP4(target: number): SearchResult[] {
   const r: SearchResult[] = [], seen = new Set<string>()
-  for (const r4 of E24E48) {
+  for (const r4 of E24) {
     if (r4 <= target) continue
     const aTarget = (r4 * target) / (r4 - target)
-    for (const r1 of E24E48) {
+    for (const r1 of E24) {
       if (r1 >= aTarget) break
       const remaining = aTarget - r1
       if (remaining <= 0) continue
-      const pair = findClosestPair(remaining, pairSums)
+      const pair = findClosestPair(remaining, pairSumsE24)
       if (pair === null) continue
       const a = r1 + pair.sum
       const total = (a * r4) / (a + r4)
       const key = dedupKey("tsp4", [r1, pair.a, pair.b, r4])
       if (seen.has(key)) continue; seen.add(key)
+      if (r.length >= TOP_K) continue
       r.push(makeResult("tsp4", [r1, pair.a, pair.b, r4], total, target))
     }
   }
@@ -352,27 +373,23 @@ function searchTSP4(target: number): SearchResult[] {
 
 function searchTPS4(target: number): SearchResult[] {
   const r: SearchResult[] = [], seen = new Set<string>()
-  for (const r4 of E24E48) {
+  for (const r4 of E24) {
     if (r4 >= target) continue
-    const aTarget = target - r4
-    if (aTarget <= 0) continue
-    for (const r1 of E24E48) {
-      if (r1 <= aTarget) continue
-      const inv1 = 1 / r1
-      for (const r2 of E24E48) {
-        if (r2 <= aTarget) continue
-        const inv12 = inv1 + 1 / r2
-        if (1 / inv12 <= aTarget) continue // parallel of r1,r2 must be > aTarget... actually need r1∥r2 > aTarget
-        const r3t = 1 / (1 / aTarget - inv12)
-        if (r3t < 0) continue
-        const r3 = findClosest(r3t, E24E48)
-        if (r3 === null) continue
-        const p = 1 / (inv1 + 1 / r2 + 1 / r3)
-        const total = p + r4
-        const key = dedupKey("tps4", [r1, r2, r3, r4])
-        if (seen.has(key)) continue; seen.add(key)
-        r.push(makeResult("tps4", [r1, r2, r3, r4], total, target))
-      }
+    const pairParTarget = target - r4
+    if (pairParTarget <= 0) continue
+    for (const r1 of E24) {
+      if (r1 <= pairParTarget) continue
+      const invP = 1 / pairParTarget - 1 / r1
+      if (invP <= 0) continue
+      const pairTarget = 1 / invP
+      const pair = findClosestPar(pairTarget, pairParsE24)
+      if (pair === null) continue
+      const p = 1 / (1 / r1 + 1 / pair.a + 1 / pair.b)
+      const total = p + r4
+      const key = dedupKey("tps4", [r1, pair.a, pair.b, r4])
+      if (seen.has(key)) continue; seen.add(key)
+      if (r.length >= TOP_K) continue
+      r.push(makeResult("tps4", [r1, pair.a, pair.b, r4], total, target))
     }
   }
   return r
@@ -392,6 +409,7 @@ function searchSeries4(target: number): SearchResult[] {
         const total = r1 + r2 + r3 + r4
         const key = dedupKey("series4", [r1, r2, r3, r4])
         if (seen.has(key)) continue; seen.add(key)
+        if (r.length >= TOP_K) continue
         r.push(makeResult("series4", [r1, r2, r3, r4], total, target))
       }
     }
@@ -420,6 +438,7 @@ function searchParallel4(target: number): SearchResult[] {
         const total = 1 / (inv1 + 1 / r2 + 1 / r3 + 1 / r4)
         const key = dedupKey("parallel4", [r1, r2, r3, r4])
         if (seen.has(key)) continue; seen.add(key)
+        if (r.length >= TOP_K) continue
         r.push(makeResult("parallel4", [r1, r2, r3, r4], total, target))
       }
     }
