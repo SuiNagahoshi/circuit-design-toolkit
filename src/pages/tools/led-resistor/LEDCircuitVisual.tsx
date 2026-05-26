@@ -13,13 +13,16 @@ interface Props {
   effectiveCurrent: number
 }
 
+const RH = 16
+const LEDH = 14
+
 function SMDResistor({ x, y, label }: { x: number; y: number; label: string }) {
   return (
     <g transform={`translate(${x},${y})`}>
-      <rect x={-16} y={-7} width={32} height={14} rx={1.5} fill="#2d2d2d" />
-      <rect x={-16} y={-7} width={6} height={14} rx={1} fill="#c0c0c0" />
-      <rect x={10} y={-7} width={6} height={14} rx={1} fill="#c0c0c0" />
-      <text x={0} y={-12} textAnchor="middle" fontFamily="monospace" fontSize={8} fill="#6b7280">
+      <rect x={-7} y={-RH} width={14} height={RH * 2} rx={1.5} fill="#2d2d2d" />
+      <rect x={-7} y={-RH} width={14} height={6} rx={1} fill="#c0c0c0" />
+      <rect x={-7} y={RH - 6} width={14} height={6} rx={1} fill="#c0c0c0" />
+      <text x={12} y={4} textAnchor="start" fontFamily="monospace" fontSize={8} fill="#6b7280">
         {label}
       </text>
     </g>
@@ -42,16 +45,16 @@ function SMDLed({
   const glowOpacity = 0.15 + (brightness / 100) * 0.6
   return (
     <g transform={`translate(${x},${y})`}>
-      <rect x={-14} y={-8} width={28} height={16} rx={1.5} fill="#333" />
-      <rect x={-14} y={-8} width={6} height={16} rx={1} fill="#c0c0c0" />
-      <rect x={8} y={-8} width={6} height={16} rx={1} fill="#c0c0c0" />
-      <rect x={-8} y={-5} width={16} height={10} rx={1} fill={color} opacity={0.85} />
+      <rect x={-8} y={-LEDH} width={16} height={LEDH * 2} rx={1.5} fill="#333" />
+      <rect x={-8} y={-LEDH} width={16} height={6} rx={1} fill="#c0c0c0" />
+      <rect x={-8} y={LEDH - 6} width={16} height={6} rx={1} fill="#c0c0c0" />
+      <rect x={-5} y={-8} width={10} height={16} rx={1} fill={color} opacity={0.85} />
       <circle cx={0} cy={0} r={10} fill={color} opacity={glowOpacity} className="led-glow" />
       {brightness > 0 && (
         <circle cx={0} cy={0} r={6} fill={color} opacity={glowOpacity * 0.5} className="led-glow-pulse" />
       )}
-      <line x1={7} y1={-5} x2={7} y2={5} stroke="#fff" strokeWidth={1} opacity={0.5} />
-      <text x={0} y={16} textAnchor="middle" fontFamily="monospace" fontSize={7} fill="#6b7280">
+      <line x1={-5} y1={LEDH - 3} x2={5} y2={LEDH - 3} stroke="#fff" strokeWidth={1.5} opacity={0.6} />
+      <text x={12} y={4} textAnchor="start" fontFamily="monospace" fontSize={7} fill="#6b7280">
         {label}
       </text>
     </g>
@@ -103,43 +106,77 @@ export default function LEDCircuitVisual({
 
   const svgContent = useMemo(() => {
 
+    const wireStartY = 35
+    const gndY = mode === "single" || mode === "parallel" ? 170 : 190
+
     switch (mode) {
       case "single": {
+        const ry = 60
+        const ly = 110
         return (
           <g>
-            <line x1={cx} y1={15} x2={cx} y2={35} stroke="#4b5563" strokeWidth={1.5} />
-            <SMDResistor x={cx} y={52} label={resLabel} />
-            <line x1={cx} y1={59} x2={cx} y2={80} stroke="#4b5563" strokeWidth={1.5} />
-            <SMDLed x={cx} y={100} color={ledColor} brightness={brightness} label={curLabel} />
-            <line x1={cx} y1={108} x2={cx} y2={130} stroke="#4b5563" strokeWidth={1.5} />
+            <line x1={cx} y1={wireStartY} x2={cx} y2={ry - RH} stroke="#4b5563" strokeWidth={1.5} />
+            <SMDResistor x={cx} y={ry} label={resLabel} />
+            <line x1={cx} y1={ry + RH} x2={cx} y2={ly - LEDH} stroke="#4b5563" strokeWidth={1.5} />
+            <SMDLed x={cx} y={ly} color={ledColor} brightness={brightness} label={curLabel} />
+            <line x1={cx} y1={ly + LEDH} x2={cx} y2={gndY} stroke="#4b5563" strokeWidth={1.5} />
             <PowerSource x={cx} y={15} voltage={Vcc} />
-            <GND x={cx} y={130} />
+            <GND x={cx} y={gndY} />
           </g>
         )
       }
       case "series": {
-        const ledSpacing = Math.min(45, 160 / (seriesCount + 1))
-        const startY = 80
+        const gap = 10
+        const resH = RH * 2
+        const ledH = LEDH * 2
+        const totalResH = resH
+        const totalLedH = ledH * seriesCount
+        const totalGaps = gap * (seriesCount + 1)
+        const totalH = totalResH + totalLedH + totalGaps
+        const available = gndY - 10 - wireStartY
+        let scale = 1
+        if (totalH > available) scale = available / totalH
+
+        const scaledGap = gap * scale
+        const scaledLedH = ledH * scale
+        const scaledRH = RH * scale
+        const scaledLEDH = LEDH * scale
+
+        const startY = wireStartY + (available - totalH * scale) / 2
+        const ry = startY + scaledGap + scaledRH
         const leds = Array.from({ length: seriesCount }, (_, i) => ({
-          y: startY + i * ledSpacing,
+          y: ry + scaledRH + scaledGap + i * (scaledLedH + scaledGap) + scaledLEDH,
         }))
-        const resistorY = startY - 35
         return (
           <g>
-            <line x1={cx} y1={15} x2={cx} y2={resistorY - 7} stroke="#4b5563" strokeWidth={1.5} />
-            <SMDResistor x={cx} y={resistorY} label={resLabel} />
-            <line x1={cx} y1={resistorY + 7} x2={cx} y2={leds[0].y - 8} stroke="#4b5563" strokeWidth={1.5} />
+            <line x1={cx} y1={wireStartY} x2={cx} y2={ry - scaledRH} stroke="#4b5563" strokeWidth={1.5} />
+            <g transform={`translate(${cx},${ry}) scale(${scale})`}>
+              <rect x={-7} y={-RH} width={14} height={RH * 2} rx={1.5} fill="#2d2d2d" />
+              <rect x={-7} y={-RH} width={14} height={6} rx={1} fill="#c0c0c0" />
+              <rect x={-7} y={RH - 6} width={14} height={6} rx={1} fill="#c0c0c0" />
+            </g>
+            <line x1={cx} y1={ry + scaledRH} x2={cx} y2={leds[0].y - scaledLEDH} stroke="#4b5563" strokeWidth={1.5} />
             {leds.map((led, i) => (
               <g key={i}>
-                <SMDLed x={cx} y={led.y} color={ledColor} brightness={brightness} label={`${curLabel}`} />
+                <g transform={`translate(${cx},${led.y}) scale(${scale})`}>
+                  <rect x={-8} y={-LEDH} width={16} height={LEDH * 2} rx={1.5} fill="#333" />
+                  <rect x={-8} y={-LEDH} width={16} height={6} rx={1} fill="#c0c0c0" />
+                  <rect x={-8} y={LEDH - 6} width={16} height={6} rx={1} fill="#c0c0c0" />
+                  <rect x={-5} y={-8} width={10} height={16} rx={1} fill={ledColor} opacity={0.85} />
+                  <circle cx={0} cy={0} r={10} fill={ledColor} opacity={0.15 + (brightness / 100) * 0.6} className="led-glow" />
+                  {brightness > 0 && (
+                    <circle cx={0} cy={0} r={6} fill={ledColor} opacity={(0.15 + (brightness / 100) * 0.6) * 0.5} className="led-glow-pulse" />
+                  )}
+                  <line x1={-5} y1={LEDH - 3} x2={5} y2={LEDH - 3} stroke="#fff" strokeWidth={1.5} opacity={0.6} />
+                </g>
                 {i < leds.length - 1 && (
-                  <line x1={cx} y1={led.y + 8} x2={cx} y2={leds[i + 1].y - 8} stroke="#4b5563" strokeWidth={1.5} />
+                  <line x1={cx} y1={led.y + scaledLEDH} x2={cx} y2={leds[i + 1].y - scaledLEDH} stroke="#4b5563" strokeWidth={1.5} />
                 )}
               </g>
             ))}
-            <line x1={cx} y1={leds[leds.length - 1].y + 8} x2={cx} y2={150} stroke="#4b5563" strokeWidth={1.5} />
+            <line x1={cx} y1={leds[leds.length - 1].y + scaledLEDH} x2={cx} y2={gndY} stroke="#4b5563" strokeWidth={1.5} />
             <PowerSource x={cx} y={15} voltage={Vcc} />
-            <GND x={cx} y={150} />
+            <GND x={cx} y={gndY} />
           </g>
         )
       }
@@ -147,25 +184,29 @@ export default function LEDCircuitVisual({
         const branches = Math.min(parallelCount, 4)
         const spacing = 240 / (branches + 1)
         const xs = Array.from({ length: branches }, (_, i) => 40 + spacing * (i + 1))
+        const topBusY = wireStartY + 5
+        const botBusY = gndY - 15
+        const ry = topBusY + 18 + RH
+        const ly = botBusY - 18 - LEDH
         return (
           <g>
-            <line x1={40} y1={35} x2={280} y2={35} stroke="#4b5563" strokeWidth={1.5} />
-            <line x1={40} y1={145} x2={280} y2={145} stroke="#4b5563" strokeWidth={1.5} />
+            <line x1={40} y1={topBusY} x2={280} y2={topBusY} stroke="#4b5563" strokeWidth={1.5} />
+            <line x1={40} y1={botBusY} x2={280} y2={botBusY} stroke="#4b5563" strokeWidth={1.5} />
             <PowerSource x={cx} y={15} voltage={Vcc} />
-            <line x1={cx} y1={25} x2={cx} y2={35} stroke="#4b5563" strokeWidth={1.5} />
-            <GND x={cx} y={145} />
-            <line x1={cx} y1={145} x2={cx} y2={155} stroke="#4b5563" strokeWidth={1.5} />
+            <line x1={cx} y1={25} x2={cx} y2={topBusY} stroke="#4b5563" strokeWidth={1.5} />
+            <GND x={cx} y={gndY} />
+            <line x1={cx} y1={botBusY} x2={cx} y2={gndY} stroke="#4b5563" strokeWidth={1.5} />
             {xs.map((x, i) => (
               <g key={i}>
-                <line x1={x} y1={35} x2={x} y2={48} stroke="#4b5563" strokeWidth={1.5} />
-                <SMDResistor x={x} y={62} label={resLabel} />
-                <line x1={x} y1={69} x2={x} y2={85} stroke="#4b5563" strokeWidth={1.5} />
-                <SMDLed x={x} y={100} color={ledColor} brightness={brightness} label={curLabel} />
-                <line x1={x} y1={108} x2={x} y2={145} stroke="#4b5563" strokeWidth={1.5} />
+                <line x1={x} y1={topBusY} x2={x} y2={ry - RH} stroke="#4b5563" strokeWidth={1.5} />
+                <SMDResistor x={x} y={ry} label={resLabel} />
+                <line x1={x} y1={ry + RH} x2={x} y2={ly - LEDH} stroke="#4b5563" strokeWidth={1.5} />
+                <SMDLed x={x} y={ly} color={ledColor} brightness={brightness} label={curLabel} />
+                <line x1={x} y1={ly + LEDH} x2={x} y2={botBusY} stroke="#4b5563" strokeWidth={1.5} />
               </g>
             ))}
             {parallelCount > 4 && (
-              <text x={cx} y={175} textAnchor="middle" fontSize={8} fill="#9ca3af">
+              <text x={cx} y={gndY + 15} textAnchor="middle" fontSize={8} fill="#9ca3af">
                 ... あと {parallelCount - 4} 枝
               </text>
             )}
@@ -176,54 +217,69 @@ export default function LEDCircuitVisual({
         const branches = Math.min(parallelCount, 3)
         const spacing = 200 / (branches + 1)
         const xs = Array.from({ length: branches }, (_, i) => 60 + spacing * (i + 1))
-        const ledSpacing = Math.min(35, 140 / (seriesCount + 1))
-        const startY = 80
+        const topBusY = wireStartY + 5
+        const botBusY = gndY - 10
+
+        const gap = 8
+        const ledH = LEDH * 2
+        const resH = RH * 2
+        const totalLedH = ledH * seriesCount
+        const totalGaps = gap * (seriesCount + 1)
+        const totalH = resH + totalLedH + totalGaps
+        const available = botBusY - topBusY - 20
+        let scale = 1
+        if (totalH > available) scale = available / totalH
+
+        const scaledGap = gap * scale
+        const scaledLedH = ledH * scale
+        const scaledRH = RH * scale
+        const scaledLEDH = LEDH * scale
+
+        const startY = topBusY + 10 + (available - totalH * scale) / 2
+        const ry = startY + scaledGap + scaledRH
+        const ledYs = Array.from({ length: seriesCount }, (_, j) =>
+          ry + scaledRH + scaledGap + j * (scaledLedH + scaledGap) + scaledLEDH,
+        )
         return (
           <g>
-            <line x1={40} y1={35} x2={280} y2={35} stroke="#4b5563" strokeWidth={1.5} />
-            <line x1={40} y1={155} x2={280} y2={155} stroke="#4b5563" strokeWidth={1.5} />
+            <line x1={40} y1={topBusY} x2={280} y2={topBusY} stroke="#4b5563" strokeWidth={1.5} />
+            <line x1={40} y1={botBusY} x2={280} y2={botBusY} stroke="#4b5563" strokeWidth={1.5} />
             <PowerSource x={cx} y={15} voltage={Vcc} />
-            <line x1={cx} y1={25} x2={cx} y2={35} stroke="#4b5563" strokeWidth={1.5} />
-            <GND x={cx} y={155} />
-            <line x1={cx} y1={155} x2={cx} y2={165} stroke="#4b5563" strokeWidth={1.5} />
+            <line x1={cx} y1={25} x2={cx} y2={topBusY} stroke="#4b5563" strokeWidth={1.5} />
+            <GND x={cx} y={gndY} />
+            <line x1={cx} y1={botBusY} x2={cx} y2={gndY} stroke="#4b5563" strokeWidth={1.5} />
             {xs.map((x, i) => (
               <g key={i}>
-                <line x1={x} y1={35} x2={x} y2={48} stroke="#4b5563" strokeWidth={1.5} />
-                <SMDResistor x={x} y={62} label={resLabel} />
-                <line x1={x} y1={69} x2={x} y2={startY - 8} stroke="#4b5563" strokeWidth={1.5} />
-                {Array.from({ length: seriesCount }, (_, j) => (
+                <line x1={x} y1={topBusY} x2={x} y2={ry - scaledRH} stroke="#4b5563" strokeWidth={1.5} />
+                <g transform={`translate(${x},${ry}) scale(${scale})`}>
+                  <rect x={-7} y={-RH} width={14} height={RH * 2} rx={1.5} fill="#2d2d2d" />
+                  <rect x={-7} y={-RH} width={14} height={6} rx={1} fill="#c0c0c0" />
+                  <rect x={-7} y={RH - 6} width={14} height={6} rx={1} fill="#c0c0c0" />
+                </g>
+                <line x1={x} y1={ry + scaledRH} x2={x} y2={ledYs[0] - scaledLEDH} stroke="#4b5563" strokeWidth={1.5} />
+                {ledYs.map((ly, j) => (
                   <g key={j}>
-                    <SMDLed
-                      x={x}
-                      y={startY + j * ledSpacing}
-                      color={ledColor}
-                      brightness={brightness}
-                      label={curLabel}
-                    />
+                    <g transform={`translate(${x},${ly}) scale(${scale})`}>
+                      <rect x={-8} y={-LEDH} width={16} height={LEDH * 2} rx={1.5} fill="#333" />
+                      <rect x={-8} y={-LEDH} width={16} height={6} rx={1} fill="#c0c0c0" />
+                      <rect x={-8} y={LEDH - 6} width={16} height={6} rx={1} fill="#c0c0c0" />
+                      <rect x={-5} y={-8} width={10} height={16} rx={1} fill={ledColor} opacity={0.85} />
+                      <circle cx={0} cy={0} r={10} fill={ledColor} opacity={0.15 + (brightness / 100) * 0.6} className="led-glow" />
+                      {brightness > 0 && (
+                        <circle cx={0} cy={0} r={6} fill={ledColor} opacity={(0.15 + (brightness / 100) * 0.6) * 0.5} className="led-glow-pulse" />
+                      )}
+                      <line x1={-5} y1={LEDH - 3} x2={5} y2={LEDH - 3} stroke="#fff" strokeWidth={1.5} opacity={0.6} />
+                    </g>
                     {j < seriesCount - 1 && (
-                      <line
-                        x1={x}
-                        y1={startY + j * ledSpacing + 8}
-                        x2={x}
-                        y2={startY + (j + 1) * ledSpacing - 8}
-                        stroke="#4b5563"
-                        strokeWidth={1.5}
-                      />
+                      <line x1={x} y1={ly + scaledLEDH} x2={x} y2={ledYs[j + 1] - scaledLEDH} stroke="#4b5563" strokeWidth={1.5} />
                     )}
                   </g>
                 ))}
-                <line
-                  x1={x}
-                  y1={startY + (seriesCount - 1) * ledSpacing + 8}
-                  x2={x}
-                  y2={155}
-                  stroke="#4b5563"
-                  strokeWidth={1.5}
-                />
+                <line x1={x} y1={ledYs[ledYs.length - 1] + scaledLEDH} x2={x} y2={botBusY} stroke="#4b5563" strokeWidth={1.5} />
               </g>
             ))}
             {parallelCount > 3 && (
-              <text x={cx} y={185} textAnchor="middle" fontSize={8} fill="#9ca3af">
+              <text x={cx} y={gndY + 15} textAnchor="middle" fontSize={8} fill="#9ca3af">
                 ... あと {parallelCount - 3} 枝
               </text>
             )}
@@ -237,7 +293,7 @@ export default function LEDCircuitVisual({
 
   return (
     <div className="flex flex-col items-center">
-      <svg viewBox="0 0 320 200" className="w-full max-w-xs">
+      <svg viewBox="0 0 320 220" className="w-full max-w-xs">
         {svgContent}
       </svg>
       <div className="mt-2 flex items-center gap-2">

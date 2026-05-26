@@ -172,19 +172,24 @@ export function toColorBands(ohm: number): ColorBand[] {
     multiplier--
   }
 
-  if (multiplier < -2) multiplier = -2
+  if (multiplier > 9) multiplier = 9
 
   const digits = [
     Math.floor(value / 10) % 10,
     Math.floor(value) % 10,
   ]
 
-  const multStr = (multiplier + 2).toString()
+  const multKey =
+    multiplier >= 0
+      ? multiplier.toString()
+      : multiplier === -1
+        ? "gold"
+        : "silver"
 
   const bands: ColorBand[] = [
     { color: BAND_COLORS[digits[0].toString()]?.[0] ?? "#212121", label: BAND_COLORS[digits[0].toString()]?.[1] ?? "?" },
     { color: BAND_COLORS[digits[1].toString()]?.[0] ?? "#212121", label: BAND_COLORS[digits[1].toString()]?.[1] ?? "?" },
-    { color: BAND_COLORS[multStr]?.[0] ?? "#212121", label: BAND_COLORS[multStr]?.[1] ?? "?" },
+    { color: BAND_COLORS[multKey]?.[0] ?? "#212121", label: BAND_COLORS[multKey]?.[1] ?? "?" },
     { color: BAND_COLORS["gold"]![0], label: "金" },
   ]
 
