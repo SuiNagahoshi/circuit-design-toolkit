@@ -67,7 +67,7 @@ export default function LEDResistorPage() {
   const [Vcc, setVcc] = useState("5")
   const [Vf, setVf] = useState("2.0")
   const [If, setIf] = useState("20")
-  const [brightness, setBrightness] = useState(80)
+  const [brightness, setBrightness] = useState(100)
   const [seriesCount, setSeriesCount] = useState("1")
   const [parallelCount, setParallelCount] = useState("1")
   const [ledColorIdx, setLedColorIdx] = useState(0)
@@ -253,7 +253,9 @@ export default function LEDResistorPage() {
           {/* Brightness slider */}
           <div className="mt-4">
             <div className="flex items-center justify-between">
-              <label className="text-sm font-medium text-gray-700">輝度</label>
+              <label className="text-sm font-medium text-gray-700">
+                輝度 <span className="font-normal text-gray-400">(Ifを最大値としたときの割合)</span>
+              </label>
               <span className="text-sm font-semibold text-gray-900">{brightness}%</span>
             </div>
             <input
@@ -266,11 +268,11 @@ export default function LEDResistorPage() {
             />
             <div className="mt-1 flex items-center justify-between text-xs text-gray-400">
               <span>0% (消灯)</span>
-              <span>
-                実効電流:{" "}
+              <span className="font-medium text-gray-600">
+                実効 If = {(Number.parseFloat(If) || 0).toFixed(0)}mA × {brightness}% ={" "}
                 {((Number.parseFloat(If) || 0) * (brightness / 100)).toFixed(1)} mA
               </span>
-              <span>100% (最大)</span>
+              <span>100% (定格)</span>
             </div>
           </div>
 
