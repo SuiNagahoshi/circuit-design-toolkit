@@ -24,6 +24,14 @@ export const tools: Tool[] = [
     path: "/tools/resistor-combination",
     category: "受動部品",
   },
+  {
+    id: "led-resistor",
+    title: "LED抵抗計算",
+    description: "SMD部品の直並列回路に対応、LED発光色もシミュレート",
+    icon: "💡",
+    path: "/tools/led-resistor",
+    category: "受動部品",
+  },
 ]
 
 export const categories = ["受動部品"]

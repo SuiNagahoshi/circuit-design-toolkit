@@ -3,6 +3,7 @@ import Layout from "./components/Layout"
 import Home from "./pages/Home"
 import ResistorPage from "./pages/tools/resistor/ResistorPage"
 import ResistorCombinationPage from "./pages/tools/resistor-combination"
+import LEDResistorPage from "./pages/tools/led-resistor"
 
 export default function App() {
   return (
@@ -12,6 +13,7 @@ export default function App() {
           <Route index element={<Home />} />
           <Route path="tools/resistor" element={<ResistorPage />} />
           <Route path="tools/resistor-combination" element={<ResistorCombinationPage />} />
+          <Route path="tools/led-resistor" element={<LEDResistorPage />} />
         </Route>
       </Routes>
     </HashRouter>
