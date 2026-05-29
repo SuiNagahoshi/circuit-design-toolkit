@@ -32,6 +32,14 @@ export const tools: Tool[] = [
     path: "/tools/led-resistor",
     category: "受動部品",
   },
+  {
+    id: "dcdc-converter",
+    title: "DCDC回路定数設計",
+    description: "降圧DCDCコンバータのインダクタ・コンデンサ・抵抗値を自動計算",
+    icon: "⚙️",
+    path: "/tools/dcdc-converter",
+    category: "電源回路",
+  },
 ]
 
-export const categories = ["受動部品"]
+export const categories = ["受動部品", "電源回路"]
